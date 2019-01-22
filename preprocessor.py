@@ -49,11 +49,13 @@ def processor_algorithms(img_raw,img_flat,img_dark):
 
     #Performs flatfield correction:
     img_rtn = img_raw - img_dark
-    img_raw = img_flat - img_dark #Reuses img_raw for memory conservation
+    img_raw = img_flat - img_dark   #Reuses img_raw for memory conservation
+    img_raw[img_raw == 0] = 1       #Avoids dividing by zero
     img_rtn = np.divide(img_rtn,img_raw)
+    img_rtn*=255
 
 	# Returns the result
-    return img_rtn
+    return img_rtn.astype('uint8')
 
 
 def clicked():
@@ -105,13 +107,15 @@ def app_launch():
     txt_FFC = Label(window, text="Please select the flat field image.")
     txt_FFC.grid(column=0,row=10)
     window.update()
-    img_flat = filedialog.askopenfilename()
+    img_flat_name = filedialog.askopenfilename()
+    img_flat = imageio.imread(img_flat_name,pilmode='L')
 
     #Acquires the dark count image
     txt_FFC = Label(window, text="Please select the dark count image.")
     txt_FFC.grid(column=0,row=10)
     window.update()
-    img_dark = filedialog.askopenfilename()
+    img_dark_name = filedialog.askopenfilename()
+    img_dark = imageio.imread(img_dark_name,pilmode='L')
 
     while (continue_condition == True):
 
@@ -130,26 +134,30 @@ def app_launch():
             save_name = save_path+"/"+image_name
 
             # Reads in the image
-            img = imageio.imread(image_path[i])
+            img = imageio.imread(image_path[i],pilmode='L')
 
             # Displays number of images remaing and updates progress bar
-            # Displays how many images are remaining in correct english
+                # Displays how many images are remaining in correct english
             if (no_items-i) != 1:
                 remain_txt = str(no_items-i)+" images remaining."
             else:
                 remain_txt = "1 image remaining."
 
-            # Updates number of remaining images
+                # Updates number of remaining images
             img_remain = Label(window, text=remain_txt)
             img_remain.grid(column=0, row=20)
 
-            # Updates progress bar
+                # Updates progress bar
             percent = int(100*i/no_items)
             bar['value'] = percent
             window.update()
 
             # Filters image and performs brightness correction
             img = processor_algorithms(img,img_flat,img_dark)
+
+            #Displays the image
+            plt.imshow(img)
+            plt.show()
 
             # Saves the image
             imageio.imwrite(save_name, img)
