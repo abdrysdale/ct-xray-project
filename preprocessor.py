@@ -47,12 +47,10 @@ bar.grid(column=0, row=0)
 # Performs the necessary preprocessing algorithms
 def processor_algorithms(img_raw,img_flat,img_dark):
 
-    # #Performs flatfield correction:
-    # img_rtn = img_raw - img_dark
-    # img_raw = img_flat - img_dark #Reuses img_raw for memory conservation
-    # img_rtn = np.divide(img_rtn,img_raw)
-
-    img_rtn = img_raw - img_raw
+    #Performs flatfield correction:
+    img_rtn = img_raw - img_dark
+    img_raw = img_flat - img_dark #Reuses img_raw for memory conservation
+    img_rtn = np.divide(img_rtn,img_raw)
 
 	# Returns the result
     return img_rtn
@@ -114,7 +112,7 @@ def app_launch():
     txt_FFC.grid(column=0,row=10)
     window.update()
     img_dark = filedialog.askopenfilename()
-    
+
     while (continue_condition == True):
 
         # User prompted to select image(s) for filtering
