@@ -18,36 +18,49 @@
 #   http://www.scipy-lectures.org/advanced/image_processing/#geometrical-transformations
 #   https://likegeeks.com/python-gui-examples-tkinter-tutorial/
 
+
+#Bugs/Improvements:
+#       -Dir separator different for windows and linux
+#       -Screen dimensions don't work on linux
+
 # Imports relevent libraries
 import numpy as np
 import imageio
 from scipy import misc,ndimage
 import matplotlib.pyplot as plt
-from tkinter import Tk, Label, messagebox, ttk, filedialog
-from tkinter.ttk import Progressbar
+from tkinter import Tk, Label, messagebox, ttk, filedialog, Button
+from tkinter.ttk import Progressbar, Combobox
 
 
 # Initialises window with a title and set dimensions
 window = Tk()
 window.title("Preprocessor")
-window.geometry('350x100')
+window.geometry('500x300')
 
 
 # Creates a progress bar
-prog_length = 350
+prog_length = 300
 bar = Progressbar(window, length=prog_length)
 bar.grid(column=0, row=0)
 
 
 # Performs the necessary preprocessing algorithms
-def processor_algorithms(img):
+def processor_algorithms(img_raw,img_flat,img_dark):
 
-    # Performs a guassian blur
-    img_rtn = ndimage.gaussian_filter(img, sigma=3)
+    # #Performs flatfield correction:
+    # img_rtn = img_raw - img_dark
+    # img_raw = img_flat - img_dark #Reuses img_raw for memory conservation
+    # img_rtn = np.divide(img_rtn,img_raw)
+
+    img_rtn = img_raw - img_raw
 
 	# Returns the result
     return img_rtn
 
+
+def clicked():
+    #Condition for a button being clicked
+    return True
 
 # Obtains the folder for the processed images to be saved to
 def dir_save_path():
@@ -82,8 +95,6 @@ def file_name(path):
 	return image_name
 
 # Launches the application
-
-
 def app_launch():
 
 	# Initital variables
@@ -91,10 +102,25 @@ def app_launch():
 
 	# Obtains the dir path to save photos
     save_path = dir_save_path()
+
+    #Acquires the flat field image
+    txt_FFC = Label(window, text="Please select the flat field image.")
+    txt_FFC.grid(column=0,row=10)
+    window.update()
+    img_flat = filedialog.askopenfilename()
+
+    #Acquires the dark count image
+    txt_FFC = Label(window, text="Please select the dark count image.")
+    txt_FFC.grid(column=0,row=10)
+    window.update()
+    img_dark = filedialog.askopenfilename()
     
     while (continue_condition == True):
 
         # User prompted to select image(s) for filtering
+        txt_img_select = Label(window, text="Please select the image(s) to be processed.")
+        txt_img_select.grid(column=0,row=10)
+        window.update()
         image_path = filedialog.askopenfilenames()
         no_items = len(image_path)
 
@@ -103,7 +129,7 @@ def app_launch():
 
 			# Obtains the image name and creates the path for the image to be saved to
             image_name = file_name(image_path[i])
-            save_name = save_path+"\\"+image_name
+            save_name = save_path+"/"+image_name
 
             # Reads in the image
             img = imageio.imread(image_path[i])
@@ -125,13 +151,13 @@ def app_launch():
             window.update()
 
             # Filters image and performs brightness correction
-            img = processor_algorithms(img)
+            img = processor_algorithms(img,img_flat,img_dark)
 
             # Saves the image
             imageio.imwrite(save_name, img)
 
 		# Updates image remaining text and progress bar
-        im_remain = Label(window, text="                  Done                  ")
+        im_remain = Label(window, text="                     Done                     ")
         im_remain.grid(column=0, row=10)
         bar['value'] = 100
         window.update()
