@@ -26,21 +26,19 @@
 # Imports relevent libraries
 import numpy as np
 import imageio
-from scipy import misc,ndimage
 import matplotlib.pyplot as plt
-from tkinter import Tk, Label, messagebox, ttk, filedialog, Button
-from tkinter.ttk import Progressbar, Combobox
+from tkinter import Tk, Label, messagebox, ttk, filedialog
+from tkinter.ttk import Progressbar
 
 
 # Initialises window with a title and set dimensions
 window = Tk()
 window.title("Preprocessor")
-window.geometry('500x300')
+window.geometry('500x500')
 
 
 # Creates a progress bar
-prog_length = 300
-bar = Progressbar(window, length=prog_length)
+bar = Progressbar(window, length=300)
 bar.grid(column=0, row=0)
 
 
@@ -54,13 +52,9 @@ def processor_algorithms(img_raw,img_flat,img_dark):
     img_rtn = np.divide(img_rtn,img_raw)
     img_rtn*=255
 
-	# Returns the result
+	#Returns the result as unsigned interger
     return img_rtn.astype('uint8')
 
-
-def clicked():
-    #Condition for a button being clicked
-    return True
 
 # Obtains the folder for the processed images to be saved to
 def dir_save_path():
@@ -133,7 +127,7 @@ def app_launch():
             image_name = file_name(image_path[i])
             save_name = save_path+"/"+image_name
 
-            # Reads in the image
+            # Reads in the image as gray-scale (no colour information present)
             img = imageio.imread(image_path[i],pilmode='L')
 
             # Displays number of images remaing and updates progress bar
@@ -156,7 +150,7 @@ def app_launch():
             img = processor_algorithms(img,img_flat,img_dark)
 
             #Displays the image
-            plt.imshow(img)
+            plt.imshow(img,cmap='gray')
             plt.show()
 
             # Saves the image
