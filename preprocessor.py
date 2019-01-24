@@ -21,11 +21,12 @@
 
 #Bugs/Improvements:
 #       -Dir separator different for windows and linux
-#       -Screen dimensions don't work on linux
 
 # Imports relevent libraries
 import numpy as np
 import imageio
+import os
+from scipy import ndimage
 import matplotlib.pyplot as plt
 from tkinter import Tk, Label, messagebox, ttk, filedialog
 from tkinter.ttk import Progressbar
@@ -44,6 +45,17 @@ bar.grid(column=0, row=0)
 
 # Performs the necessary preprocessing algorithms
 def processor_algorithms(img_raw,img_flat,img_dark):
+
+    #Tests if image is of the right dimensions
+    dim_x,dim_y= img_raw.shape
+
+    #Crops image
+    if dim_x != 256 and dim_y != 256:
+
+        #Assumes a constant boarder to crop image
+        boarder =int(2 + (dim_x - 256)/2)
+        img_raw = img_raw[boarder:256+boarder,boarder:256+boarder]
+
 
     #Performs flatfield correction:
     img_rtn = img_raw - img_dark
@@ -88,6 +100,54 @@ def file_name(path):
 
 	return image_name
 
+def FFC_path_images():
+
+    str_file = "FFC_image_paths.txt"
+
+    #Creates file if doesn't exist
+    if os.path.exists(str_file) == False:
+        file = open(str_file,"w")
+        file.close()
+
+    #Reads image paths from file
+    file = open(str_file,"r")
+    str_flat_img = file.readline()
+    str_dark_img = file.readline()
+    index_nl= str_flat_img.find('\n')
+    str_flat_img = str_flat_img[0:index_nl]
+
+
+    #Acquires the flat field image from usr
+    if os.path.exists(str_flat_img) == False:
+
+        #Prompts usr to select image
+        txt_FFC = Label(window, text="Please select the flat field image.")
+        txt_FFC.grid(column=0,row=10)
+        window.update()
+        str_flat_img = filedialog.askopenfilename()
+
+    #Acquires the dark count image
+    if os.path.exists(str_dark_img) == False:
+
+        #Prompts usr to select image
+        txt_FFC = Label(window, text="Please select the dark count image.")
+        txt_FFC.grid(column=0,row=10)
+        window.update()
+        str_dark_img = filedialog.askopenfilename()
+
+    #Opens images
+    img_flat = imageio.imread(str_flat_img,pilmode='L')
+    img_dark = imageio.imread(str_dark_img,pilmode='L')
+
+    #Writes correct image paths to file
+    file.close()
+    file = open(str_file,"w")
+    str_write=str_flat_img+"\n"+str_dark_img
+    file.write(str_write)
+    file.close()
+
+    return img_flat,img_dark
+
 # Launches the application
 def app_launch():
 
@@ -95,21 +155,11 @@ def app_launch():
     continue_condition = True
 
 	# Obtains the dir path to save photos
-    save_path = dir_save_path()
+    #save_path = dir_save_path()
+    #!--------------------------Change paths post testing (1)------------------!
+    save_path = '/home/usr/Documents/Programs/ct-x-ray-project/Processed_images'
 
-    #Acquires the flat field image
-    txt_FFC = Label(window, text="Please select the flat field image.")
-    txt_FFC.grid(column=0,row=10)
-    window.update()
-    img_flat_name = filedialog.askopenfilename()
-    img_flat = imageio.imread(img_flat_name,pilmode='L')
-
-    #Acquires the dark count image
-    txt_FFC = Label(window, text="Please select the dark count image.")
-    txt_FFC.grid(column=0,row=10)
-    window.update()
-    img_dark_name = filedialog.askopenfilename()
-    img_dark = imageio.imread(img_dark_name,pilmode='L')
+    img_flat,img_dark = FFC_path_images()
 
     while (continue_condition == True):
 
