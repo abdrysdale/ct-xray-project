@@ -21,6 +21,8 @@
 
 #Bugs/Improvements:
 #       -Dir separator different for windows and linux
+#       -Flat field correction doesn't do much?
+#       -Dimension issue
 
 # Imports relevent libraries
 import numpy as np
@@ -61,11 +63,15 @@ def processor_algorithms(img_raw,img_flat,img_dark):
     img_rtn = img_raw - img_dark
     img_raw = img_flat - img_dark   #Reuses img_raw for memory conservation
     img_raw[img_raw == 0] = 1       #Avoids dividing by zero
+    m  = np.mean(img_raw)        #Calculates average for scaling
     img_rtn = np.divide(img_rtn,img_raw)
-    img_rtn*=255
+    img_rtn*=m
+
+    #Filters the image
+    img_rtn = ndimage.filters.median_filter(img_rtn,6)
 
 	#Returns the result as unsigned interger
-    return img_rtn.astype('uint8')
+    return img_rtn.astype('uint8'),boarder
 
 
 # Obtains the folder for the processed images to be saved to
@@ -197,20 +203,26 @@ def app_launch():
             window.update()
 
             # Filters image and performs brightness correction
-            img = processor_algorithms(img,img_flat,img_dark)
-
-            #Displays the image
-            plt.imshow(img,cmap='gray')
-            plt.show()
+            img_rtn,boarder = processor_algorithms(img,img_flat,img_dark)
 
             # Saves the image
-            imageio.imwrite(save_name, img)
+            imageio.imwrite(save_name, img_rtn)
 
 		# Updates image remaining text and progress bar
         im_remain = Label(window, text="                     Done                     ")
         im_remain.grid(column=0, row=10)
         bar['value'] = 100
         window.update()
+
+        #Plots image, processed image and difference
+        _,axes=plt.subplots(2,2)
+        plt.subplots_adjust(left=0, bottom=0, right=1, top=1, wspace=0, hspace=0)
+        img = img[boarder:256+boarder,boarder:256+boarder]
+        axes[0,0].imshow(img,cmap='gray')
+        axes[0,1].imshow(img_rtn,cmap='gray')
+        img_sub=img_rtn - img
+        axes[1,0].imshow(img_sub,cmap='gray')
+        plt.show()
 
         # Asks to retry
         continue_condition = messagebox.askyesno('Continue?', 'Would you like to filter more images?')
