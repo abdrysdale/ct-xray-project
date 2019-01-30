@@ -33,11 +33,14 @@ def cart2pxl(x,y,dim_x,dim_y):
 
 def rotation(i,j,theta,dim_x,dim_y):
 
-    x,y = pxl2cart(i,j,dim_x,dim_y)
+    x,_ = pxl2cart(i,j,dim_x,dim_y)
 
-    r,_= cv2.cartToPolar(x,y)
+    y=0 #For a 1d case as pxl2cart will be used for 2d senario
 
-    x,y = cv2.polarToCart(r[0],theta)
+    r,theta_ary= cv2.cartToPolar(x,y) #can set angleInDegrees=True
+    theta_ary[0]= theta
+
+    x,y = cv2.polarToCart(r[0],theta_ary[0])
 
     i,j = cart2pxl(x,y,dim_x,dim_y)
 
@@ -50,21 +53,21 @@ def main():
     dim_x = 256
     dim_y = 256
     canvas = np.zeros((dim_x,dim_y))
-    object = np.ones(256)
+    obj_line = np.ones(256)
 
     #Creates theta variables
-    dtheta = 0.1
+    dtheta = 0.001
     theta_ttl = int(2*(np.pi)/dtheta)
 
     #For each angle rotate the object
     for angle_no in range(0,theta_ttl):
         theta = dtheta*angle_no
 
-        for x in range(1,256):  #For each pixel in the object, perform rotation
+        for x in range(255,0,-1):  #For each pixel in the object, perform rotation
 
             i,j = rotation(x,128,theta,dim_x,dim_y)   #Rotates object coords
 
-            canvas[i,j] = object[x]             #Draws object value on canvas
+            canvas[i,j] = obj_line[x]             #Draws object value on canvas
 
     plt.imshow(canvas)
     plt.show()
