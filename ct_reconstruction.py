@@ -9,8 +9,9 @@
 
 #Imports relevent libraries
 import imageio
-import numpy
+import numpy as np
 import cv2
+import matplotlib.pyplot as plt
 
 
 def pxl2cart(i,j,dim_x,dim_y):
@@ -30,15 +31,13 @@ def cart2pxl(x,y,dim_x,dim_y):
     return i,j
 
 
-def rotation(i,j,dtheta,dim_x,dim_y):
+def rotation(i,j,theta,dim_x,dim_y):
 
     x,y = pxl2cart(i,j,dim_x,dim_y)
 
-    r,theta = cv2.cartToPolar(x,y)
+    r,_= cv2.cartToPolar(x,y)
 
-    theta[0]+=dtheta
-
-    x,y = cv2.polarToCart(r[0],theta[0])
+    x,y = cv2.polarToCart(r[0],theta)
 
     i,j = cart2pxl(x,y,dim_x,dim_y)
 
@@ -50,17 +49,24 @@ def main():
     #Creates canvas and object to be rotated
     dim_x = 256
     dim_y = 256
-    canvas = np.zeros(dim_x,dim_y)
+    canvas = np.zeros((dim_x,dim_y))
     object = np.ones(256)
 
     #Creates theta variables
     dtheta = 0.1
     theta_ttl = int(2*(np.pi)/dtheta)
 
-    #Rotates the object
+    #For each angle rotate the object
     for angle_no in range(0,theta_ttl):
         theta = dtheta*angle_no
 
-        for i in range(0,256):
+        for x in range(1,256):  #For each pixel in the object, perform rotation
 
-            x,y = rotation(i,0,theta,dim_x,dim_y)
+            i,j = rotation(x,128,theta,dim_x,dim_y)   #Rotates object coords
+
+            canvas[i,j] = object[x]             #Draws object value on canvas
+
+    plt.imshow(canvas)
+    plt.show()
+
+main()
