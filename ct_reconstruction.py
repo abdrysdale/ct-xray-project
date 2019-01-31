@@ -1,12 +1,13 @@
 #A python script to reconstruct a 3D image
 
 #Overview:
-#   -Converts pixel coordinates into cartesian coordinates
-#   -Converts cartesian coordinates into cylindrical coordinates
-#   -Rotates by desired rotation
-#   -Converts back into catesian
-#   -Converts back into pixel coordinates
-#   -
+#   -For each slice:
+#       -Converts into cylindrical coordinates
+#       -Rotates the image
+#       -Converts into pixel coordinates
+#       -Saves in 3D array
+#   -Filters final image
+#   -Displays a slice and saves 3D final image
 
 #Imports relevent libraries
 from skimage import io
@@ -98,7 +99,7 @@ def main():
 
     #Smooths the image
     canvas = ndimage.filters.median_filter(canvas,3)
-    plt.imshow(canvas[128,:,:])
-    plt.show()
+    io.imsave('test.tif',canvas)
+    plt.imshow(canvas[128,:,:]);plt.show()
 
 main()

@@ -28,7 +28,6 @@
 import numpy as np
 import imageio
 import os
-from scipy import ndimage
 import matplotlib.pyplot as plt
 from tkinter import Tk, Label, messagebox, ttk, filedialog
 from tkinter.ttk import Progressbar
@@ -76,7 +75,7 @@ def dir_save_path():
 
 	# Informs user of update
 	no_folder = Label(
-	    window, text="                                     Thank you.                                     ")
+	    window, text="                                     Thank you.                                    ")
 	no_folder.grid(column=0, row=10)
 	window.update()
 
@@ -85,15 +84,18 @@ def dir_save_path():
 # Obtains just the file name from a whole path
 def file_name(path):
 
-	# Finds the starting index of the file
-	for i in range(0, len(path)):
-		if path[i] == "/":
-			dir_index = i
+	# File separator for cross-platform compatability
+    sep = os.sep
+
+    #Finds the starting index of the file
+    for i in range(0, len(path)):
+        if path[i] == sep:
+            dir_index = i
 
 	# Returns only the file name
-	image_name = path[dir_index:len(path)]
+    image_name = path[dir_index:len(path)]
 
-	return image_name
+    return image_name
 
 def FFC_path_images():
 
@@ -107,8 +109,6 @@ def FFC_path_images():
     #Reads image path from file
     file = open(str_file,"r")
     str_flat_img = file.readline()
-    index_nl= str_flat_img.find('\n')
-    str_flat_img = str_flat_img[0:index_nl]
 
 
     #Acquires the flat field image from usr
@@ -137,6 +137,7 @@ def app_launch():
 
 	# Initital variables
     continue_condition = True
+    sep = os.sep
 
 	# Obtains the dir path to save photos
     save_path = dir_save_path()
@@ -158,7 +159,7 @@ def app_launch():
 
 			# Obtains the image name and creates the path for the image to be saved to
             image_name = file_name(image_path[i])
-            save_name = save_path+"/"+image_name
+            save_name = save_path+sep+image_name
 
             # Reads in the image
             img = imageio.imread(image_path[i])
