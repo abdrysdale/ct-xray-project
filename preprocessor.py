@@ -46,32 +46,21 @@ bar.grid(column=0, row=0)
 
 
 # Performs the necessary preprocessing algorithms
-def processor_algorithms(img_raw,img_flat,img_dark):
+def processor_algorithms(img_raw,img_flat):
 
     #Tests if image is of the right dimensions
     dim_x,dim_y= img_raw.shape
 
-    #Crops image
-    if dim_x != 256 and dim_y != 256:
-
-        #Assumes a constant boarder to crop image
-        boarder =int(2 + (dim_x - 256)/2)
-        img_raw = img_raw[boarder:256+boarder,boarder:256+boarder]
-
 
     #Performs flatfield correction:
-    img_rtn = img_raw - img_dark
-    img_raw = img_flat - img_dark   #Reuses img_raw for memory conservation
-    img_raw[img_raw == 0] = 1       #Avoids dividing by zero
+    img_flat[img_flat == 0] = 1       #Avoids dividing by zero
     m  = np.mean(img_raw)        #Calculates average for scaling
-    img_rtn = np.divide(img_rtn,img_raw)
+    img_rtn = np.divide(img_raw,img_flat)
     img_rtn*=m
 
-    #Filters the image
-    img_rtn = ndimage.filters.median_filter(img_rtn,6)
 
 	#Returns the result as unsigned interger
-    return img_rtn.astype('uint8'),boarder
+    return img_rtn.astype('uint8')
 
 
 # Obtains the folder for the processed images to be saved to
@@ -115,10 +104,9 @@ def FFC_path_images():
         file = open(str_file,"w")
         file.close()
 
-    #Reads image paths from file
+    #Reads image path from file
     file = open(str_file,"r")
     str_flat_img = file.readline()
-    str_dark_img = file.readline()
     index_nl= str_flat_img.find('\n')
     str_flat_img = str_flat_img[0:index_nl]
 
@@ -132,27 +120,17 @@ def FFC_path_images():
         window.update()
         str_flat_img = filedialog.askopenfilename()
 
-    #Acquires the dark count image
-    if os.path.exists(str_dark_img) == False:
 
-        #Prompts usr to select image
-        txt_FFC = Label(window, text="Please select the dark count image.")
-        txt_FFC.grid(column=0,row=10)
-        window.update()
-        str_dark_img = filedialog.askopenfilename()
+    #Opens image
+    img_flat = imageio.imread(str_flat_img)
 
-    #Opens images
-    img_flat = imageio.imread(str_flat_img,pilmode='L')
-    img_dark = imageio.imread(str_dark_img,pilmode='L')
-
-    #Writes correct image paths to file
+    #Writes correct image path to file
     file.close()
     file = open(str_file,"w")
-    str_write=str_flat_img+"\n"+str_dark_img
-    file.write(str_write)
+    file.write(str_flat_img)
     file.close()
 
-    return img_flat,img_dark
+    return img_flat
 
 # Launches the application
 def app_launch():
@@ -161,11 +139,10 @@ def app_launch():
     continue_condition = True
 
 	# Obtains the dir path to save photos
-    #save_path = dir_save_path()
-    #!--------------------------Change paths post testing (1)------------------!
-    save_path = '/home/usr/Documents/Programs/ct-x-ray-project/Processed_images'
+    save_path = dir_save_path()
 
-    img_flat,img_dark = FFC_path_images()
+    #Obtains flat field image
+    img_flat = FFC_path_images()
 
     while (continue_condition == True):
 
@@ -183,8 +160,8 @@ def app_launch():
             image_name = file_name(image_path[i])
             save_name = save_path+"/"+image_name
 
-            # Reads in the image as gray-scale (no colour information present)
-            img = imageio.imread(image_path[i],pilmode='L')
+            # Reads in the image
+            img = imageio.imread(image_path[i])
 
             # Displays number of images remaing and updates progress bar
                 # Displays how many images are remaining in correct english
@@ -203,7 +180,7 @@ def app_launch():
             window.update()
 
             # Filters image and performs brightness correction
-            img_rtn,boarder = processor_algorithms(img,img_flat,img_dark)
+            img_rtn = processor_algorithms(img,img_flat)
 
             # Saves the image
             imageio.imwrite(save_name, img_rtn)
@@ -217,7 +194,6 @@ def app_launch():
         #Plots image, processed image and difference
         _,axes=plt.subplots(2,2)
         plt.subplots_adjust(left=0, bottom=0, right=1, top=1, wspace=0, hspace=0)
-        img = img[boarder:256+boarder,boarder:256+boarder]
         axes[0,0].imshow(img,cmap='gray')
         axes[0,1].imshow(img_rtn,cmap='gray')
         img_sub=img_rtn - img

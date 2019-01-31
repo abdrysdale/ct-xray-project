@@ -6,12 +6,15 @@
 #   -Rotates by desired rotation
 #   -Converts back into catesian
 #   -Converts back into pixel coordinates
+#   -
 
 #Imports relevent libraries
-import imageio
+from skimage import io
 import numpy as np
+from scipy import ndimage
 import cv2
 import matplotlib.pyplot as plt
+from tkinter import Tk, Label, filedialog
 
 
 def pxl2cart(i,dim_x,dim_y):
@@ -46,30 +49,56 @@ def rotation(i,theta,dim_x,dim_y):
 
     return i,j
 
+#Creates window and obtains stack
+def init_window():
+
+    #Initialises the window (GUI)
+    window = Tk()
+    window.title("Rotational Reconstruction")
+    window.geometry('300x100')
+
+    #Asks the user to select an image
+    wtxt_select = Label(window, text='Please select an image.')
+    wtxt_select.grid(column=0,row=0)
+    window.update()
+
+
+    #Opens the image
+    str_object = filedialog.askopenfilename()
+    img_object = io.imread(str_object)
+
+    return img_object
 
 def main():
 
     #Creates canvas and object to be rotated
     dim_x = 256
     dim_y = 256
-    canvas = np.zeros((dim_x,dim_y))
-    obj_line = np.concatenate((np.zeros(120),np.ones(16),np.zeros(120)))
+    dim_z = 256
+    canvas = np.zeros((dim_x,dim_y,dim_z))
+    obj_stack = init_window()
 
     #Creates theta variables
-    dtheta = 0.001
-    theta_ttl = int(2*(np.pi)/dtheta)
+    theta = np.linspace(0.,359.,360)
+    len_theta = len(theta)
 
     #For each angle rotate the object
-    for angle_no in range(0,theta_ttl):
-        theta = dtheta*angle_no
+    for no_img in range(0,len_theta):
+        theta_angle = theta[no_img]
 
-        for x in range(255,0,-1):  #For each pixel in the object, perform rotation
+        for x in range(dim_x-1,0,-1):  #For each pixel in the object, perform rotation
 
-            i,j = rotation(x,theta,dim_x,dim_y)   #Rotates object coords
+            i,j = rotation(x,theta_angle,dim_x,dim_y)   #Rotates object coords
 
-            canvas[j,i] = obj_line[x]             #Draws object value on canvas
+            for z in range(0,dim_z):
 
-    plt.imshow(canvas)
+                #Draws the image on the canvas
+                canvas[j,z,i] = obj_stack[no_img,z,x]
+
+
+    #Smooths the image
+    canvas = ndimage.filters.median_filter(canvas,3)
+    plt.imshow(canvas[128,:,:])
     plt.show()
 
 main()
