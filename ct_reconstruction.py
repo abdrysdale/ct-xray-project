@@ -12,51 +12,28 @@
 #Imports relevent libraries
 from skimage import io
 import numpy as np
-from scipy import ndimage
-import cv2
+from scipy import ndimage as ndi
+import skimage.transform as skt
 import matplotlib.pyplot as plt
-from tkinter import Tk, Label, filedialog
+from tkinter import Tk, Label, filedialog,Button
+from tkinter import *
+from tkinter.ttk import Progressbar
 
 
-def pxl2cart(i,dim_x,dim_y):
-
-    #Converts pixel coordinates to cartesian coordinates
-    x = i - dim_x/2
-
-    #Only calculates x as y is always zero
-    return x
-
-def cart2pxl(x,y,dim_x,dim_y):
-
-    #Converts cartesian coordinates to pixel coordinates
-    i = int(x + dim_x/2)
-    j = int(dim_y/2 -y)
-
-    return i,j
 
 
-def rotation(i,theta,dim_x,dim_y):
 
-    x = pxl2cart(i,dim_x,dim_y)
+#Initialises the window (GUI)
+window = Tk()
+window.title("Rotational Reconstruction")
+window.geometry('400x100')
 
-    y=0 #For a 1d case as pxl2cart will be used for 2d senario
+#Creates progress bar
+bar = Progressbar(window, length=400)
+bar.grid(column=0,row=10)
 
-    r,theta_ary= cv2.cartToPolar(x,y) #can set angleInDegrees=True
-    theta_ary[0]+= theta
 
-    x,y = cv2.polarToCart(r[0],theta_ary[0])
-
-    i,j = cart2pxl(x,y,dim_x,dim_y)
-
-    return i,j
-
-#Creates window and obtains stack
-def init_window():
-
-    #Initialises the window (GUI)
-    window = Tk()
-    window.title("Rotational Reconstruction")
-    window.geometry('300x100')
+def get_image(window):
 
     #Asks the user to select an image
     wtxt_select = Label(window, text='Please select an image.')
@@ -68,38 +45,53 @@ def init_window():
     str_object = filedialog.askopenfilename()
     img_object = io.imread(str_object)
 
+    #Thanks the user
+    wtxt_select = Label(window, text="          Cheers.         ")
+    wtxt_select.grid(column=0,row=0)
+    window.update()
+
     return img_object
 
 def main():
 
-    #Creates canvas and object to be rotated
-    dim_x = 256
-    dim_y = 256
-    dim_z = 256
-    canvas = np.zeros((dim_x,dim_y,dim_z))
-    obj_stack = init_window()
+    #Acquires object from user and creates canvas for 3D image
+    obj_stack = get_image(window)
+    dim_stack = obj_stack.shape
+    obj_fbp= np.zeros((dim_stack[1],dim_stack[1],dim_stack[1])) #As image is square
 
-    #Creates theta variables
-    theta = np.linspace(0.,359.,360)
-    len_theta = len(theta)
+    #Creates slider for slice selection
+    slider = Scale(window, from_=0, to=dim_stack[1]-1, orient=HORIZONTAL)
+    slider.grid(column=0,row=30)
+    window.update()
 
-    #For each angle rotate the object
-    for no_img in range(0,len_theta):
-        theta_angle = theta[no_img]
+    #Creates theta array (in degrees)
+    dtheta = 1
+    theta = np.arange(0, dim_stack[0],dtheta)
 
-        for x in range(dim_x-1,0,-1):  #For each pixel in the object, perform rotation
+    for i in range(0,dim_stack[1]):
 
-            i,j = rotation(x,theta_angle,dim_x,dim_y)   #Rotates object coords
+        #Updates progress bar
+        percentage = int(100*i/dim_stack[1])
+        bar['value'] = percentage
+        window.update()
 
-            for z in range(0,dim_z):
+        #Performs filtered back projection on each y slice
+        obj_fbp[:,i,:] = skt.iradon(ndi.rotate(obj_stack[:,i,:],90),theta=theta,circle=True)
 
-                #Draws the image on the canvas
-                canvas[j,z,i] = obj_stack[no_img,z,x]
+    #Saves the image
+    io.imsave('test.tif',obj_fbp)
 
+    #Button to display image
+    #Displays new slice
+    def clicked():
+        plt.imshow(obj_fbp[:,slider.get(),:])
+        plt.show()
 
-    #Smooths the image
-    canvas = ndimage.filters.median_filter(canvas,3)
-    io.imsave('test.tif',canvas)
-    plt.imshow(canvas[128,:,:]);plt.show()
+    #Creates display button
+    btn = Button(window, text="Load slice",bg="green",fg="white", command=clicked)
+    btn.grid(column=0, row=20)
+    window.update()
+
+    window.mainloop()
 
 main()
