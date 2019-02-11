@@ -4,11 +4,8 @@
 #   -numpy      (for general maths and array manipulation)
 #       https://pypi.org/project/numpy/
 
-#   -imageio    (for reading and writing images)
-#       https://pypi.org/project/imageio/
-
-#   -scipy      (for the preprocessing functions and general manipulation)
-#       https://pypi.org/project/scipy/
+#   -skimage (for reading and writing images)
+#       https://pypi.org/project/skimage/
 
 #   -matplotlib (for image display)
 #       https://pypi.org/project/matplotlib/
@@ -26,7 +23,7 @@
 
 # Imports relevent libraries
 import numpy as np
-import imageio
+from skimage import io
 import os
 import matplotlib.pyplot as plt
 from tkinter import Tk, Label, messagebox, ttk, filedialog
@@ -122,7 +119,7 @@ def FFC_path_images():
 
 
     #Opens image
-    img_flat = imageio.imread(str_flat_img)
+    img_flat = io.imread(str_flat_img)
 
     #Writes correct image path to file
     file.close()
@@ -162,7 +159,7 @@ def app_launch():
             save_name = save_path+sep+image_name
 
             # Reads in the image
-            img = imageio.imread(image_path[i])
+            img = io.imread(image_path[i])
 
             # Displays number of images remaing and updates progress bar
                 # Displays how many images are remaining in correct english
@@ -180,11 +177,12 @@ def app_launch():
             bar['value'] = percent
             window.update()
 
+
             # Filters image and performs brightness correction
             img_rtn = processor_algorithms(img,img_flat)
 
             # Saves the image
-            imageio.imwrite(save_name, img_rtn)
+            io.imsave(save_name, img_rtn)
 
 		# Updates image remaining text and progress bar
         im_remain = Label(window, text="                     Done                     ")
@@ -199,6 +197,7 @@ def app_launch():
         axes[0,1].imshow(img_rtn,cmap='gray')
         img_sub=img_rtn - img
         axes[1,0].imshow(img_sub,cmap='gray')
+        axes[1,1].imshow(img_flat,cmap='gray')
         plt.show()
 
         # Asks to retry
