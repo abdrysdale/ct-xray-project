@@ -167,7 +167,7 @@ def app_launch():
                 img_remain.grid(column=0, row=20)
 
                 # Updates progress bar
-                percent = int(100*i/no_items)
+                percent = int(100*slice/z)
                 bar['value'] = percent
                 window.update()
 
