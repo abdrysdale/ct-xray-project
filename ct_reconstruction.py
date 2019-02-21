@@ -1,13 +1,8 @@
 #A python script to reconstruct a 3D image
 
 #Overview:
-#   -For each slice:
-#       -Converts into cylindrical coordinates
-#       -Rotates the image
-#       -Converts into pixel coordinates
-#       -Saves in 3D array
-#   -Filters final image
-#   -Displays a slice and saves 3D final image
+#   -Uses a filtered back projection on each sinogram and saves as a stack
+#   -Displays the results
 
 #Imports relevent libraries
 from skimage import io
@@ -19,7 +14,7 @@ import matplotlib
 matplotlib.use("TkAgg")
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from matplotlib.figure import Figure
-from tkinter import Tk, Label, filedialog,Button
+from tkinter import Tk, Label, filedialog
 from tkinter import *
 from tkinter.ttk import Progressbar
 import pygame.mixer as mxr
@@ -108,12 +103,12 @@ def file_name(path):
 
 def main():
 
-    #Acquires object from user and creates canvas for 3D image
+    #Acquires object from user and creates black object for filtered back projection
     obj_stack,str_object = get_image(window)
     dim_stack = obj_stack.shape
-    obj_fbp= np.zeros((dim_stack[1],dim_stack[1],dim_stack[1])) #As image is square
+    obj_fbp= np.zeros((dim_stack[1],dim_stack[1],dim_stack[1])) #As image is square dimensions are the same
 
-    #Gets save location from user (if needed)
+    #Gets save location
     dir_save = dir_save_path()
     str_imname = file_name(str_object)
     str_save = os.path.join(dir_save, str_imname)
@@ -124,22 +119,26 @@ def main():
 
     #Starting loading music
     mxr.music.load("musac.mp3")
-    mxr.music.play(start=1.3)
+    mxr.music.play(loops=-1,start=1.3)
+
+    #Redefining dot calls
+    iradon = skt.iradon
+    rotate = ndi.rotate
 
     #Obtains reconstruction using filtered back projection
     for i in range(0,dim_stack[1]):
 
         #Updates progress bar
-        percentage = int(100*i/dim_stack[1])
+        percentage = int(100*i/dim_stack[1]+1)
         bar['value'] = percentage
         window.update()
 
         #Fades out music
-        if percentage == 92:
+        if percentage == 91:
             mxr.music.fadeout(7000)
 
         #Performs filtered back projection on each y slice
-        obj_fbp[i,:,:] = skt.iradon(ndi.rotate(obj_stack[:,i,:],90),theta=theta,circle=True)
+        obj_fbp[i,:,:] = skt.iradon(rotate(obj_stack[:,i,:],90),theta=theta,circle=True)
 
 
 
