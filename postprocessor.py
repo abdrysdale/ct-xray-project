@@ -1,4 +1,4 @@
-# A program that applies a set of preprocessing algorithms to a selection of images
+# A program that applies a set of postprocessing algorithms to a selection of images
 
 #Libraries to download:
 #   -numpy      (for general maths and array manipulation)
@@ -41,8 +41,7 @@ bar.grid(column=0, row=0)
 def processor_algorithms(img_raw,img_flat):
 
     #Initial variables
-    thrs_upper = 150
-    fltr_rad = 2
+    fltr_rad = 1
     hard_fltr_rad = 10
 
     #Performs flatfield correction:
@@ -51,15 +50,12 @@ def processor_algorithms(img_raw,img_flat):
     img_rtn = np.divide(img_raw,img_flat)
     img_rtn*=m
 
-    #Thresholds image
-    img_rtn[img_rtn > thrs_upper] = thrs_upper
-
     #Performs a soft median filter
     img_rtn = ndi.filters.median_filter(img_rtn,size=fltr_rad)
 
     #Harder median filter on masked pixels
     img_hard_filter = ndi.filters.median_filter(img_rtn,size=hard_fltr_rad)
-    img_rtn[img_flat == 1] = img_hard_filter[img_flat == 1]
+    img_rtn[img_flat == 1] = img_hard_filter[img_flat == 1]c
 
 	#Returns the result
     return img_rtn
@@ -148,12 +144,13 @@ def app_launch():
 
             #Iterates over the dimensions
             dim = img.shape
-            img_rtn = np.zeros(dim)
 
             if len(dim) == 2:
                 z = 1
             else:
                 z = dim[0]
+                img_rtn = np.zeros(dim)
+
             # Displays number of images remaing and updates progress bar
             # Displays how many images are remaining in correct english
             for slice in range(0,z):
@@ -173,10 +170,13 @@ def app_launch():
 
 
                 # Filters image and performs brightness correction
-                img_rtn[slice,:,:] = processor_algorithms(img[slice,:,:],img_flat)
+                if z != 1:
+                    img_rtn[slice,:,:] = processor_algorithms(img[slice,:,:],img_flat)
+                else:
+                    img_rtn = processor_algorithms(img,img_flat)
 
             # Saves the image
-            io.imsave(save_name, img_rtn)
+            io.imsave(save_name, img_rtn.astype('uint16'), plugin='tifffile')
 
 		# Updates image remaining text and progress bar
         im_remain = Label(window, text="                     Done                     ")
@@ -187,11 +187,20 @@ def app_launch():
         #Plots image, processed image and difference
         _,axes=plt.subplots(2,2)
         plt.subplots_adjust(left=0, bottom=0, right=1, top=1, wspace=0, hspace=0)
-        axes[0,0].imshow(img[slice,:,:],cmap='gray')
-        axes[0,1].imshow(img_rtn[slice,:,:],cmap='gray')
-        img_sub=img_rtn - img
-        axes[1,0].imshow(img_sub[slice,:,:],cmap='gray')
-        axes[1,1].imshow(img_flat,cmap='gray')
+
+        if z != 1:
+            axes[0,0].imshow(img[slice,:,:],cmap='gray')
+            axes[0,1].imshow(img_rtn[slice,:,:],cmap='gray')
+            img_sub=img_rtn - img
+            axes[1,0].imshow(img_sub[slice,:,:],cmap='gray')
+            axes[1,1].imshow(img_flat,cmap='gray')
+
+        else:
+            axes[0,0].imshow(img,cmap='gray')
+            axes[0,1].imshow(img_rtn,cmap='gray')
+            img_sub=img_rtn - img
+            axes[1,0].imshow(img_sub,cmap='gray')
+            axes[1,1].imshow(img_flat,cmap='gray')
         plt.show()
 
         # Asks to retry

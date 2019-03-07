@@ -17,14 +17,12 @@ from matplotlib.figure import Figure
 from tkinter import Tk, Label, filedialog
 from tkinter import *
 from tkinter.ttk import Progressbar
-import pygame.mixer as mxr
 
 
 #Initialises the window (GUI)
 window = Tk()
 window.title("Filtered Back Projection")
 window.geometry('400x400')
-mxr.init()
 
 #Creates progress bar
 bar = Progressbar(window, length=400)
@@ -117,10 +115,6 @@ def main():
     dtheta = 1
     theta = np.arange(0, dim_stack[0],dtheta)
 
-    #Starting loading music
-    mxr.music.load("musac.mp3")
-    mxr.music.play(loops=-1,start=1.3)
-
     #Redefining dot calls
     iradon = skt.iradon
     rotate = ndi.rotate
@@ -133,18 +127,13 @@ def main():
         bar['value'] = percentage
         window.update()
 
-        #Fades out music
-        if percentage == 91:
-            mxr.music.fadeout(7000)
 
         #Performs filtered back projection on each y slice
-        obj_fbp[i,:,:] = skt.iradon(rotate(obj_stack[:,i,:],90),theta=theta,circle=True)
-
-
+        obj_fbp[i,:,:] = iradon(rotate(obj_stack[:,i,:],90),theta=theta,circle=True,filter='ramp', interpolation='linear')
 
     #Saves the image
     print(dir_save+"\n"+str_imname +"\n"+str_save)
-    io.imsave(str_save,obj_fbp.astype('uint32'),plugin='tifffile')
+    io.imsave(str_save,obj_fbp.astype('int16'),plugin='tifffile')
 
     #Plots the figure
     fig = Figure(figsize=(3,3))
