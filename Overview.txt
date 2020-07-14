@@ -1,9 +1,0 @@
------------Overview of coding tasks-------------
-
--Flat field
--Rotation stage with python
--MTF
--CT filtered back projection
-
-
-

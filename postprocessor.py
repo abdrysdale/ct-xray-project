@@ -55,7 +55,7 @@ def processor_algorithms(img_raw,img_flat):
 
     #Harder median filter on masked pixels
     img_hard_filter = ndi.filters.median_filter(img_rtn,size=hard_fltr_rad)
-    img_rtn[img_flat == 1] = img_hard_filter[img_flat == 1]c
+    img_rtn[img_flat == 1] = img_hard_filter[img_flat == 1]
 
 	#Returns the result
     return img_rtn
